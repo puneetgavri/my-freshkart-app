@@ -1,0 +1,25 @@
+# Robot 2: looks for risky patterns in our own code.
+name: 2 - Code (Semgrep)
+
+on: [push, workflow_dispatch]
+
+permissions:
+  contents: read
+
+jobs:
+  semgrep:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Semgrep
+        run: pip install semgrep
+
+      - name: Scan the code (fails if anything is found)
+        run: semgrep scan --config p/python --error

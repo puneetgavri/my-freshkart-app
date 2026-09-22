@@ -1,0 +1,28 @@
+# Robot 4: looks for risky settings in our infrastructure files.
+name: 4 - Infrastructure (Checkov)
+
+on: [push, workflow_dispatch]
+
+permissions:
+  contents: read
+
+jobs:
+  checkov:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Checkov
+        run: pip install checkov
+
+      - name: Show every finding (this step never fails)
+        run: checkov -d infra --compact --quiet --soft-fail
+
+      - name: Stop the build for public storage only
+        run: checkov -d infra --compact --quiet --check CKV_AWS_53,CKV_AWS_54,CKV_AWS_55,CKV_AWS_56

@@ -1,0 +1,42 @@
+# Robot 5: tests a running website from the outside.
+# It is slow, so it runs only when you click "Run workflow".
+name: 5 - Running app (ZAP)
+
+on: workflow_dispatch
+
+permissions:
+  contents: read
+
+jobs:
+  zap:
+    runs-on: ubuntu-latest
+    services:
+      juiceshop:
+        image: bkimminich/juice-shop
+        ports:
+          - 3000:3000
+    steps:
+      - name: Get the code (for the rules file)
+        uses: actions/checkout@v6
+
+      - name: Wait until the website answers
+        run: |
+          for i in $(seq 1 30); do
+            if curl -s http://localhost:3000 > /dev/null; then echo "Website is up"; exit 0; fi
+            sleep 2
+          done
+          echo "Website did not start"; exit 1
+
+      - name: Run the ZAP baseline scan
+        run: |
+          mkdir -p zap && chmod 777 zap
+          cp zap-rules.tsv zap/
+          docker run --rm --network host -v "$PWD/zap:/zap/wrk:rw" ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py -t http://localhost:3000 -c zap-rules.tsv -I -r zap-report.html
+
+      - name: Save the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report
+          path: zap/zap-report.html
