@@ -33,7 +33,8 @@ def product():
     conn = sqlite3.connect(DB)
     # PROBLEM: the user's text is glued straight into the SQL query.
     rows = conn.execute(
-        f"SELECT name, price FROM products WHERE hidden = 0 AND name = '{name}'"
+        "SELECT name, price FROM products WHERE hidden = 0 AND name = ?",
+        (name,),
     ).fetchall()
     conn.close()
     return {"products": rows}
@@ -42,4 +43,4 @@ def product():
 if __name__ == "__main__":
     setup_db()
     # PROBLEM: debug mode must never be on in production.
-    app.run(port=5000, debug=True)
+    app.run(port=5002)
